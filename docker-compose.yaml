@@ -4,5 +4,4 @@ services:
   HttpClientPerf:
     image: jamiegs/httpclientperf:latest
     build:
-      context: .
-      dockerfile: src/HttpClientPerf/Dockerfile
+      context: src/HttpClientPerf/.
