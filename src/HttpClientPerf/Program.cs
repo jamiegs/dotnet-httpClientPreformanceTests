@@ -28,15 +28,21 @@ namespace HttpClientPerf
             var urlOption = command.Option("-u|--url", "URL to send request to.", CommandOptionType.SingleValue);
             var iterationsOption = command.Option("-i|--iterations", "Number of iterations.", CommandOptionType.SingleValue);
             var disableKeepAliveOption = command.Option("-dk|--disable-keepalive", "Disables keepalive", CommandOptionType.NoValue);
-            command.OnExecute(() => ExecuteGetCommand(urlOption, iterationsOption, disableKeepAliveOption));
+            var requestTimeoutOption = command.Option("-t|--request-timeout", "Sets a timeout on each request.", CommandOptionType.SingleValue);
+            command.OnExecute(() => ExecuteGetCommand(urlOption, iterationsOption, disableKeepAliveOption, requestTimeoutOption));
         }
-        static int ExecuteGetCommand(CommandOption urlOption, CommandOption iterationsOption, CommandOption disableKeepAliveOption)
+        static int ExecuteGetCommand(CommandOption urlOption, CommandOption iterationsOption, CommandOption disableKeepAliveOption, CommandOption requestTimeoutOption)
         {
             var iterationsString = iterationsOption.Value();
             int iterations = 1;
             int.TryParse(iterationsString, out iterations);
 
-            using (var sender = new HttpMessageSender(disableKeepAliveOption.HasValue()))
+            var timeoutString = requestTimeoutOption.Value();
+            int timeout = 100;
+            
+            int.TryParse(timeoutString, out timeout);
+        
+            using (var sender = new HttpMessageSender(disableKeepAliveOption.HasValue(), timeout))
             {
                 for (int i = 0; i < iterations; i++)
                 {

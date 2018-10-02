@@ -11,7 +11,7 @@ namespace HttpClientPerf.Sender
     public class HttpMessageSender : IDisposable
     {
         private static HttpClient _httpClient;
-        public HttpMessageSender(bool disableKeepAlive)
+        public HttpMessageSender(bool disableKeepAlive, int timeout)
         {
             // Create _httpClient once only
             if (_httpClient != null)
@@ -24,7 +24,7 @@ namespace HttpClientPerf.Sender
                 UseProxy = false
             })
             {
-                Timeout = TimeSpan.FromSeconds(100)
+                Timeout = TimeSpan.FromSeconds(timeout)
             };
             if (disableKeepAlive)
             {
