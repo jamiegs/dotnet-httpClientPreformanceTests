@@ -22,10 +22,10 @@ namespace HttpClientPerf.Sender
             _httpClient = new HttpClient(new HttpClientHandler
             {
                 UseProxy = false
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(timeout)
-            };
+            });
+            
+            if (timeout > 0) _httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
+           
             if (disableKeepAlive)
             {
                 _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");

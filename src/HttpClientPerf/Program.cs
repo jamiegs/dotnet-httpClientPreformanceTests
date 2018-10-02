@@ -28,7 +28,7 @@ namespace HttpClientPerf
             var urlOption = command.Option("-u|--url", "URL to send request to.", CommandOptionType.SingleValue);
             var iterationsOption = command.Option("-i|--iterations", "Number of iterations.", CommandOptionType.SingleValue);
             var disableKeepAliveOption = command.Option("-dk|--disable-keepalive", "Disables keepalive", CommandOptionType.NoValue);
-            var requestTimeoutOption = command.Option("-t|--request-timeout", "Sets a timeout on each request.", CommandOptionType.SingleValue);
+            var requestTimeoutOption = command.Option("-t|--request-timeout", "Sets a timeout in milliseconds on each request.", CommandOptionType.SingleValue);
             command.OnExecute(() => ExecuteGetCommand(urlOption, iterationsOption, disableKeepAliveOption, requestTimeoutOption));
         }
         static int ExecuteGetCommand(CommandOption urlOption, CommandOption iterationsOption, CommandOption disableKeepAliveOption, CommandOption requestTimeoutOption)
@@ -48,8 +48,20 @@ namespace HttpClientPerf
                 {
                     using (var l = new PerfTimerLogger("get request"))
                     {
-                        var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None);
-                        Debug.WriteLine(result.Result.ToString());
+                        try {
+                            var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None);
+                            Debug.WriteLine(result.Result.ToString());
+                        } 
+                        catch (AggregateException ex)
+                        {
+                            var flatException = ex.Flatten();
+                            Debug.WriteLine(flatException.Message);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                        }
+
                     }
                 }
             }

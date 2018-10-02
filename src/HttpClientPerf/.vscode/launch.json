@@ -15,7 +15,9 @@
                 "-u", 
                 "http://internal-jamie-test-1832862053.us-east-1.elb.amazonaws.com:8000",
                 "-i",
-                "30"
+                "30",
+                "-t",
+                "200"
             ],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
