@@ -14,7 +14,7 @@ namespace HttpClientPerf
 
         string _message;
         Stopwatch _timer;
-
+        public long ElapssedMilliseconds => _timer.ElapsedMilliseconds;
         public void Dispose()
         {
             this._timer.Stop();

@@ -3,6 +3,8 @@ using System.Diagnostics;
 using HttpClientPerf.Sender;
 using System.Threading;
 using Microsoft.Extensions.CommandLineUtils;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace HttpClientPerf
 {
@@ -44,6 +46,8 @@ namespace HttpClientPerf
         
             using (var sender = new HttpMessageSender(disableKeepAliveOption.HasValue(), timeout))
             {
+                var results = new List<long>();
+                var failures = 0;
                 for (int i = 0; i < iterations; i++)
                 {
                     using (var l = new PerfTimerLogger("get request"))
@@ -51,19 +55,27 @@ namespace HttpClientPerf
                         try {
                             var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None);
                             Console.WriteLine(result.Result.ToString());
+
                         } 
                         catch (AggregateException ex)
                         {
                             var flatException = ex.Flatten();
                             Console.WriteLine(flatException.Message);
+                            failures++;
                         }
                         catch (Exception ex)
                         {
                             Console.WriteLine(ex.Message);
+                            failures++;
                         }
-
+                        results.Add(l.ElapssedMilliseconds);
                     }
                 }
+                Console.WriteLine(string.Empty);
+                Console.WriteLine($"Max: {results.Max()}");
+                Console.WriteLine($"Min: {results.Min()}");
+                Console.WriteLine($"Average: {results.Average()}");
+                Console.WriteLine($"Failures: {failures}");
             }
             return 0;
         }
