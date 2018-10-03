@@ -64,7 +64,6 @@ namespace HttpClientPerf.Sender
 
             var resultStreamTask = result.Content.ReadAsStreamAsync();
             var resultStream = await resultStreamTask;
-
             return result.StatusCode;
         }
     }

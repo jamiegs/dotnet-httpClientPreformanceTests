@@ -50,16 +50,16 @@ namespace HttpClientPerf
                     {
                         try {
                             var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None);
-                            Debug.WriteLine(result.Result.ToString());
+                            Console.WriteLine(result.Result.ToString());
                         } 
                         catch (AggregateException ex)
                         {
                             var flatException = ex.Flatten();
-                            Debug.WriteLine(flatException.Message);
+                            Console.WriteLine(flatException.Message);
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine(ex.Message);
+                            Console.WriteLine(ex.Message);
                         }
 
                     }
