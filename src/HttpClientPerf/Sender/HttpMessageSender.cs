@@ -11,27 +11,35 @@ namespace HttpClientPerf.Sender
     public class HttpMessageSender : IDisposable
     {
         private static HttpClient _httpClient;
-        public HttpMessageSender(bool disableKeepAlive, int timeout)
+        private readonly int _timeout;
+        private readonly bool _disableKeepAlive;
+        private readonly bool _alwaysCreateClient;
+
+        public HttpMessageSender(bool disableKeepAlive, int timeout,bool alwaysCreateClient)
         {
-            // Create _httpClient once only
             if (_httpClient != null)
             {
                 return;
             }
-
-            _httpClient = new HttpClient(new HttpClientHandler
-            {
-                UseProxy = false
-            });
-            
-            if (timeout > 0) _httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
-           
-            if (disableKeepAlive)
-            {
-                _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
-            }
+            _timeout = timeout;
+            _alwaysCreateClient = alwaysCreateClient;
         }
+        internal HttpClient CreateClient(){
+            var httpClient = new HttpClient();;           
+         
+            httpClient.Timeout = TimeSpan.FromMilliseconds(_timeout);
 
+            if (_disableKeepAlive)
+            {
+                httpClient.DefaultRequestHeaders.Add("Connection", "close");
+            }
+            else 
+            {
+                httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            }
+
+            return httpClient;
+        } 
         internal HttpMessageSender(HttpClient client)
         {
             _httpClient = client;
@@ -57,10 +65,17 @@ namespace HttpClientPerf.Sender
                     stringContent.Headers.Add(header.Key, header.Value);
                 }
             }
-            _httpClient.DefaultRequestHeaders.Add("Connection", "close");
+            HttpClient httpClient = null;
+            if(_httpClient == null)
+            {
+                httpClient = CreateClient();
+            }
+            else
+            {
+                httpClient = _httpClient;
+            }
 
-            //var result = await _httpClient.PostAsync(uri, stringContent, cancellationToken);
-            var result = await _httpClient.GetAsync(uri, cancellationToken);
+            var result = await httpClient.GetAsync(uri, cancellationToken);
 
             var resultStreamTask = result.Content.ReadAsStreamAsync();
             var resultStream = await resultStreamTask;

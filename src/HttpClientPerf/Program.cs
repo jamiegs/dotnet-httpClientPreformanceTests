@@ -31,9 +31,10 @@ namespace HttpClientPerf
             var iterationsOption = command.Option("-i|--iterations", "Number of iterations.", CommandOptionType.SingleValue);
             var disableKeepAliveOption = command.Option("-dk|--disable-keepalive", "Disables keepalive", CommandOptionType.NoValue);
             var requestTimeoutOption = command.Option("-t|--request-timeout", "Sets a timeout in milliseconds on each request.", CommandOptionType.SingleValue);
-            command.OnExecute(() => ExecuteGetCommand(urlOption, iterationsOption, disableKeepAliveOption, requestTimeoutOption));
+            var alwaysCreateClientOption = command.Option("-acc|--always-create", "Always creates an http client.", CommandOptionType.NoValue);
+            command.OnExecute(() => ExecuteGetCommand(urlOption, iterationsOption, disableKeepAliveOption, requestTimeoutOption, alwaysCreateClientOption));
         }
-        static int ExecuteGetCommand(CommandOption urlOption, CommandOption iterationsOption, CommandOption disableKeepAliveOption, CommandOption requestTimeoutOption)
+        static int ExecuteGetCommand(CommandOption urlOption, CommandOption iterationsOption, CommandOption disableKeepAliveOption, CommandOption requestTimeoutOption, CommandOption alwaysCreateClientOption)
         {
             var iterationsString = iterationsOption.Value();
             int iterations = 1;
@@ -43,8 +44,9 @@ namespace HttpClientPerf
             int timeout = 100;
             
             int.TryParse(timeoutString, out timeout);
-        
-            using (var sender = new HttpMessageSender(disableKeepAliveOption.HasValue(), timeout))
+            bool alwaysCreateClient = alwaysCreateClientOption.HasValue();
+
+            using (var sender = new HttpMessageSender(disableKeepAliveOption.HasValue(), timeout, alwaysCreateClient))
             {
                 var results = new List<long>();
                 var exceptions = 0;
