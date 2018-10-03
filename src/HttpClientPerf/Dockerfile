@@ -15,4 +15,4 @@ WORKDIR /app
 # Copy C# back-end 
 COPY --from=build /app .
 
-ENTRYPOINT ./HttpClientPerf
+ENTRYPOINT ["./HttpClientPerf"]
