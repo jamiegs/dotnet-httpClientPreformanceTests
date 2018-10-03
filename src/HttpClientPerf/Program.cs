@@ -47,26 +47,30 @@ namespace HttpClientPerf
             using (var sender = new HttpMessageSender(disableKeepAliveOption.HasValue(), timeout))
             {
                 var results = new List<long>();
-                var failures = 0;
+                var exceptions = 0;
+                var non200s = 0;
                 for (int i = 0; i < iterations; i++)
                 {
                     using (var l = new PerfTimerLogger("get request"))
                     {
                         try {
-                            var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None);
-                            Console.WriteLine(result.Result.ToString());
-
+                            var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None).Result;
+                            if((int)result != 200)
+                            {
+                                Console.WriteLine(result.ToString());
+                                non200s++;
+                            }
                         } 
                         catch (AggregateException ex)
                         {
                             var flatException = ex.Flatten();
                             Console.WriteLine(flatException.Message);
-                            failures++;
+                            exceptions++;
                         }
                         catch (Exception ex)
                         {
                             Console.WriteLine(ex.Message);
-                            failures++;
+                            exceptions++;
                         }
                         results.Add(l.ElapssedMilliseconds);
                     }
@@ -75,7 +79,8 @@ namespace HttpClientPerf
                 Console.WriteLine($"Max: {results.Max()}");
                 Console.WriteLine($"Min: {results.Min()}");
                 Console.WriteLine($"Average: {results.Average()}");
-                Console.WriteLine($"Failures: {failures}");
+                Console.WriteLine($"Exceptions: {exceptions}");
+                Console.WriteLine($"Non-200 responses: {non200s}");
             }
             return 0;
         }
