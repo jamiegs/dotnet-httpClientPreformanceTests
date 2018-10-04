@@ -13,11 +13,11 @@
             "args": [
                 "get", 
                 "-u", 
-                "http://internal-jamie-test-1832862053.us-east-1.elb.amazonaws.com:8000",
+                "http://www.google.com",
                 "-i",
                 "30",
                 "-t",
-                "200",
+                "2000",
                 "-acc"
             ],
             "cwd": "${workspaceFolder}",

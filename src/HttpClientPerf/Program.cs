@@ -42,50 +42,73 @@ namespace HttpClientPerf
 
             var timeoutString = requestTimeoutOption.Value();
             int timeout = 100;
-            
+
             int.TryParse(timeoutString, out timeout);
             bool alwaysCreateClient = alwaysCreateClientOption.HasValue();
 
             using (var sender = new HttpMessageSender(disableKeepAliveOption.HasValue(), timeout, alwaysCreateClient))
             {
-                var results = new List<long>();
+                var results = new List<double>();
                 var exceptions = 0;
                 var non200s = 0;
                 for (int i = 0; i < iterations; i++)
                 {
                     using (var l = new PerfTimerLogger("get request"))
                     {
-                        try {
+                        var requestTimeMs = 0l;
+                        try
+                        {
                             var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None).Result;
-                            if((int)result != 200)
+                            if ((int)result != 200)
                             {
                                 Console.WriteLine(result.ToString());
+
                                 non200s++;
                             }
-                        } 
+                            requestTimeMs = l.ElapssedMilliseconds;
+                        }
                         catch (AggregateException ex)
                         {
+                            requestTimeMs = l.ElapssedMilliseconds;
                             var flatException = ex.Flatten();
-                            Console.WriteLine(flatException.Message);
+                            Console.WriteLine(flatException.InnerException.Message);
                             exceptions++;
                         }
                         catch (Exception ex)
                         {
+                            requestTimeMs = l.ElapssedMilliseconds;
                             Console.WriteLine(ex.Message);
                             exceptions++;
                         }
-                        results.Add(l.ElapssedMilliseconds);
+                        results.Add(requestTimeMs);
                     }
                 }
+                var resultArray = results.OrderBy(i => i).ToArray();
                 Console.WriteLine(string.Empty);
                 Console.WriteLine($"Max: {results.Max()}");
                 Console.WriteLine($"Min: {results.Min()}");
                 Console.WriteLine($"Average: {results.Average()}");
                 Console.WriteLine($"Exceptions: {exceptions}");
                 Console.WriteLine($"Non-200 responses: {non200s}");
+                Console.WriteLine($"50th percentile: {Percentile(resultArray, 50d / 100d)}");
+                Console.WriteLine($"80th percentile: {Percentile(resultArray, 80d / 100d)}");
+                Console.WriteLine($"98th percentile: {Percentile(resultArray, 98d / 100d)}");
+                Console.WriteLine($"99th percentile: {Percentile(resultArray, 99d / 100d)}");
             }
             return 0;
         }
-
+        // from https://stackoverflow.com/a/8137455/29995
+        public static double Percentile(IEnumerable<double> seq, double percentile)
+        {
+            var elements = seq.ToArray();
+            Array.Sort(elements);
+            double realIndex = percentile * (elements.Length - 1);
+            int index = (int)realIndex;
+            double frac = realIndex - index;
+            if (index + 1 < elements.Length)
+                return elements[index] * (1 - frac) + elements[index + 1] * frac;
+            else
+                return elements[index];
+        }
     }
 }
