@@ -6,8 +6,17 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace HttpClientPerf.Sender
-
 {
+    public class SenderResult
+    {
+        public SenderResult(System.Net.HttpStatusCode statusCode, double requestMs)
+        {
+            StatusCode = statusCode;
+            RequestMs = requestMs;
+        }
+        public System.Net.HttpStatusCode StatusCode { get; set; }
+        public double RequestMs { get; set; }
+    }
     public class HttpMessageSender : IDisposable
     {
         private static HttpClient _httpClient;
@@ -15,7 +24,7 @@ namespace HttpClientPerf.Sender
         private readonly bool _disableKeepAlive;
         private readonly bool _alwaysCreateClient;
 
-        public HttpMessageSender(bool disableKeepAlive, int timeout,bool alwaysCreateClient)
+        public HttpMessageSender(bool disableKeepAlive, int timeout, bool alwaysCreateClient)
         {
             if (_httpClient != null)
             {
@@ -24,22 +33,23 @@ namespace HttpClientPerf.Sender
             _timeout = timeout;
             _alwaysCreateClient = alwaysCreateClient;
         }
-        internal HttpClient CreateClient(){
-            var httpClient = new HttpClient();;           
-         
+        internal HttpClient CreateClient()
+        {
+            var httpClient = new HttpClient(); ;
+
             httpClient.Timeout = TimeSpan.FromMilliseconds(_timeout);
 
             if (_disableKeepAlive)
             {
                 httpClient.DefaultRequestHeaders.Add("Connection", "close");
             }
-            else 
+            else
             {
                 httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
             }
 
             return httpClient;
-        } 
+        }
         internal HttpMessageSender(HttpClient client)
         {
             _httpClient = client;
@@ -54,7 +64,7 @@ namespace HttpClientPerf.Sender
             }
         }
 
-        public async Task<System.Net.HttpStatusCode> Send(Uri uri, string message, IDictionary<string, string> headers, string contentType, CancellationToken cancellationToken)
+        public async Task<SenderResult> Send(Uri uri, string message, IDictionary<string, string> headers, string contentType, CancellationToken cancellationToken)
         {
             var stringContent = new StringContent(message);
             stringContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
@@ -65,8 +75,9 @@ namespace HttpClientPerf.Sender
                     stringContent.Headers.Add(header.Key, header.Value);
                 }
             }
+
             HttpClient httpClient = null;
-            if(_httpClient == null)
+            if (_httpClient == null)
             {
                 httpClient = CreateClient();
             }
@@ -74,12 +85,12 @@ namespace HttpClientPerf.Sender
             {
                 httpClient = _httpClient;
             }
-
-            var result = await httpClient.GetAsync(uri, cancellationToken);
-
-            var resultStreamTask = result.Content.ReadAsStreamAsync();
-            var resultStream = await resultStreamTask;
-            return result.StatusCode;
+            using (var l = new PerfTimerLogger("get request"))
+            {
+                var result = await httpClient.GetAsync(uri, cancellationToken);
+                var resultStream = await result.Content.ReadAsStreamAsync();
+                return new SenderResult(result.StatusCode, l.ElapsedMilliseconds);
+            }
         }
     }
 }
