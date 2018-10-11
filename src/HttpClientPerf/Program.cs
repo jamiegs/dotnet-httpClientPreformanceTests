@@ -53,34 +53,27 @@ namespace HttpClientPerf
                 var non200s = 0;
                 for (int i = 0; i < iterations; i++)
                 {
-                    using (var l = new PerfTimerLogger("get request"))
+                    var requestTimeMs = 0l;
+                    try
                     {
-                        var requestTimeMs = 0l;
-                        try
+                        var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None).Result;
+                        if ((int)result.StatusCode != 200)
                         {
-                            var result = sender.Send(new System.Uri(urlOption.Value()), "{ 'test' }", null, "application/json", CancellationToken.None).Result;
-                            if ((int)result != 200)
-                            {
-                                Console.WriteLine(result.ToString());
-
-                                non200s++;
-                            }
-                            requestTimeMs = l.ElapssedMilliseconds;
+                            Console.WriteLine(result.ToString());
+                            non200s++;
                         }
-                        catch (AggregateException ex)
-                        {
-                            requestTimeMs = l.ElapssedMilliseconds;
-                            var flatException = ex.Flatten();
-                            Console.WriteLine(flatException.InnerException.Message);
-                            exceptions++;
-                        }
-                        catch (Exception ex)
-                        {
-                            requestTimeMs = l.ElapssedMilliseconds;
-                            Console.WriteLine(ex.Message);
-                            exceptions++;
-                        }
-                        results.Add(requestTimeMs);
+                        results.Add(result.RequestMs);
+                    }
+                    catch (AggregateException ex)
+                    {
+                        var flatException = ex.Flatten();
+                        Console.WriteLine(flatException.InnerException.Message);
+                        exceptions++;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        exceptions++;
                     }
                 }
                 var resultArray = results.OrderBy(i => i).ToArray();

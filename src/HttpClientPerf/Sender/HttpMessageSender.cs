@@ -30,6 +30,7 @@ namespace HttpClientPerf.Sender
             {
                 return;
             }
+            _disableKeepAlive = disableKeepAlive;
             _timeout = timeout;
             _alwaysCreateClient = alwaysCreateClient;
         }
